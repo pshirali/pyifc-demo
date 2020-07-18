@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="keywords" content="python,interfaces,contracts,abc,implements" />
+    <meta name="description" content="Pythonic Interfaces" />
+    <title>Pythonic Interfaces</title>
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Slabo+27px);
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body {
+        font-family: 'Slabo 27px';
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: 400;
+        margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 { font-size: 1.6em; }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .large { font-size: 2em; }
+      a, a > code {
+        color: rgb(247, 104, 156);
+        text-decoration: none;
+      }
+      code {
+        color: #000000;
+        background: #e0a648;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+        float: left;
+        width: 47%;
+      }
+      .pull-right {
+        float: right;
+        width: 47%;
+      }
+      .pull-right ~ p {
+        clear: both;
+      }
+      #slideshow .slide .content code {
+        font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+        font-size: 0.9em;
+        padding: 15px;
+      }
+      .inverse {
+        background: #272822;
+        /* color: #777872; */
+        color: #AAAAAA;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 0.8em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+        bottom: 12px;
+        left: 20px;
+      }
+      #slide-how .slides {
+        font-size: 0.9em;
+        position: absolute;
+        top:  151px;
+        right: 140px;
+      }
+      #slide-how .slides h3 {
+        margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+        padding: 1px 20px;
+        height: 90px;
+        width: 120px;
+        -moz-box-shadow: 0 0 10px #777;
+        -webkit-box-shadow: 0 0 10px #777;
+        box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+        background: #fff;
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        z-index: 1;
+      }
+      #slide-how .slides .second {
+        position: relative;
+        background: #fff;
+        z-index: 0;
+      }
+
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+
+      .left-half {
+        width: 50%;
+        /* height: 92%; */
+        float: left;
+      }
+      .right-half {
+        width: 50%;
+        float: right;
+        /* padding-top: 1em; */
+      }
+      .arch-diagram {
+        max-width: 100vw;
+        max-height: 40vh;
+        float: middle;
+      }
+
+      .ps-red {color:rgb(219, 77, 91);}
+      .ps-orange {color:rgb(235, 132, 100)}
+      .ps-yellow {color:rgb(233, 190, 106);}
+      .ps-green {color:rgb(165, 214, 123);}
+      .ps-blue {color:rgb(97, 166, 245);}
+      .ps-purple {color:rgb(216, 143, 250);}
+      .underline {text-decoration: underline;}
+      .invisible {color: #272822;}
+
+</style>
+  </head>
+  <body>
+    <textarea id="source">
+layout: true
+class: center, middle, inverse
+
+---
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# .ps-green[Pythonic Interfaces]
+## The secret to building maintainable, quality code!
+
+## .ps-purple[A mini version :)]
+
+.invisible[-]
+
+## Praveen G Shirali
+
+### .ps-yellow[BangPypers Meetup on Code Quality]
+
+### .ps-yellow[18th July 2020]
+
+
+
+
+
+
+---
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# What is an interface?
+
+.invisible[-]
+
+### .ps-red[.underline[shared boundary]] across which .ps-yellow[.underline[two or more components]] .ps-green[.underline[share information]]
+
+.invisible[-]
+
+##### Source: .underline[en.wikipedia.org/wiki/Interface_(computing)]
+
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Example application
+
+1. An application does some data processing through a `DataProcessor` component
+
+2. `DataProcessor` performs `read` and `write` operations on file-like objects supplied to it
+
+3. `DataProcessor` does not know/care about the _type_ of file-like object
+
+
+```
+      ____________                             ___________
+     |            |        depends on         |           |
+     |    Data    | _ _ _ _ _ _ _ _ _ _ _ _ \ | File-like |
+     |  Processor |                         / |   object  |
+     |____________|                           |___________|
+```
+
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Interface for File-like Object
+
+```python
+
+def read(self, size: int = -1) -> bytes:
+    # read `size` (int) number of bytes. -1 means EOF
+    # return data (bytes)
+
+def write(self, data: bytes) -> int:
+    # write data (bytes)
+    # return the number of bytes written (int)
+
+
+# --**
+# File-like objects generally have more methods
+# We are keeping it simple in this example
+```
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# There may be many implementations ...
+
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+```python
+
+class FileIO:
+    '''Performs I/O on an underlying file'''
+
+    #
+    # ------------------------------------------------------
+    
+    def read(self, size: int = -1) -> bytes:
+        ...
+
+    def write(self, data: bytes) -> int:
+        ...
+
+    # ------------------------------------------------------
+
+    #
+    # ... other methods
+    
+```
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+```python
+
+class SocketIO:
+    '''Performs I/O on a socket'''
+
+    #
+    # ------------------------------------------------------
+    
+    def read(self, size: int = -1) -> bytes:
+        ...
+
+    def write(self, data: bytes) -> int:
+        ...
+
+    # ------------------------------------------------------
+
+    #
+    # ... other methods
+    
+```
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+```python
+
+class MemoryIO:
+    '''Performs I/O on an buffer in memory'''
+
+    #
+    # ------------------------------------------------------
+    
+    def read(self, size: int = -1) -> bytes:
+        ...
+
+    def write(self, data: bytes) -> int:
+        ...
+
+    # ------------------------------------------------------
+
+    #
+    # ... other methods
+    
+```
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Observation
+
+- .ps-yellow[Method definitions are same]
+- .ps-yellow[Intended behaviour is the same]
+- .ps-red[Implementation is different]
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Today, we'll explore this ...
+
+- .ps-yellow[Method definitions are same]
+.invisible[- Intended behaviour is the same]
+.invisible[- Implementation is different]
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Why?
+
+### .ps-blue[(1) Many ways to implement methods]
+
+### .ps-blue[(2) How you interact.. depends on how the methods are defined]
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# I pity the _foo_ ...
+
+```python
+    def foo(self):                              # name matters
+
+    def foo(self, a: int, b: float, c=None):    # signature matters
+
+    @staticmethod
+    def foo():                                  # no 'self'
+
+    @classmethod
+    def foo(cls):                               # class as 1st arg
+
+    @property
+    def foo(self):                              # not callable
+
+    @foo.setter
+    def foo(self, bar: bool):                   # assign. Don't call
+
+    def foo(self):
+        yield                                   # generator function
+
+    async def foo(self):                        # coroutine function
+
+    ...
+```
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# So,
+
+- .ps-yellow[Method definitions are same]
+.invisible[- Intended behaviour is the same]
+.invisible[- Implementation is different]
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# So,
+
+- .ps-yellow[Method definitions are same] .ps-green[<--- can this be enforced?]
+.invisible[- Intended behaviour is the same]
+.invisible[- Implementation is different]
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Quest: A mechanism which ensures/enforces ...
+
+1. All .ps-yellow[required methods] are implemented with correct .ps-yellow[names]
+2. Method .ps-yellow[signatures] are correct (arguments, order, type annotation etc)
+3. .ps-yellow[Descriptors/decorators] like `@staticmethod`, `@classmethod`, `@property`
+etc are honoured.
+4. generator, coroutine functions etc
+5. ...more??
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Ways to go about it ...
+
+1. Passive
+2. Active
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Passive
+
+1. Checks are `not` part of the application
+2. Checks are invoked externally and independently
+
+### Example:
+
+- Static code analysis --- linters, mypy etc.
+- Runtime code checks --- unittests
+
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Active
+
+1. Checks are `part of` the application
+2. They execute when the application runs
+3. They raise errors from within the application
+
+
+### Example:
+
+- Python's abstract base classes (abc)
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# Abstract Base Class
+
+```python
+
+# ABCMeta is the enforcement mechanism
+# available as a **metaclass**
+#
+from abc import ABCMeta
+
+# decorate interface methods with `abstractmethod` decorator
+#
+from abc import abstractmethod
+
+# +more
+# Can define `__subclasshook__` which controls behaviour of `issubclass(..)`
+#
+# `collections.abc` has ABCs for common collections
+```
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# Abstract Base Class - Interface definition
+
+```python
+
+from abc import ABCMeta, abstractmethod
+
+# IOMeta is the interface definition
+#
+class IOMeta(metaclass=ABCMeta):           # <--- Class can have any name
+
+    @abstractmethod
+    def read(self, size: int = -1) -> bytes:
+        raise NotImplemented
+
+    @abstractmethod
+    def write(self, data: bytes) -> int:
+        raise NotImplemented
+
+```
+
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# Abstract Base Class - Usage
+
+```python
+
+# Concrete implementations derive from abstract base classes
+#
+class MemoryIO(IOMeta):
+
+    def read(self, size: int = -1) -> bytes:
+        # actual implementation
+
+    def write(self, data: bytes) -> int:
+        # actual implementation
+
+
+if __name __ == "__main__":
+    m = MemoryIO()            # <--- Compliance is checked on instantiation
+
+```
+
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# Abstract Base Class - Enforcement
+
+```python
+class MemoryIO(IOMeta):       # missing `write` method implementation
+
+    def read(self, size: int = -1) -> bytes:
+        # actual implementation
+
+if __name __ == "__main__":
+    m = MemoryIO()            # <--- Compliance is checked on instantiation
+```
+```
+# ---- [output] ----
+Traceback (most recent call last):
+  File "{filename}", line {number}, in <module>
+    m = MemoryIO()
+TypeError: Can't instantiate abstract class MemoryIO with abstract methods write
+```
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+# Abstract Base Class - Limitations
+
+```python
+
+# ABCMeta does not enforce method signatures
+#
+class MemoryIO(IOMeta):
+
+    def read(self):           # <--- incorrect signature
+        # actual implementation
+
+    def write(self):          # <--- incorrect signature
+        # actual implementation
+
+
+if __name __ == "__main__":
+    m = MemoryIO()            # <--- Does not raise errors
+
+```
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+## .. on abstract base classes:
+
+- enforce presence of methods and names
+- implemented using metaclasses; enforced on derived classes too
+
+## .. but
+
+- abc has existed since Python2
+- does not enforce signatures, or anything beyond just method names
+- goals are/were different (refer to a talk by Raymond Hettinger*)
+
+
+###### Build powerful new datastructures with Python's abstract base classes https://www.youtube.com/watch?v=S_ipdVNSFlo by Raymond Hettinger, at PyCon Russia 2019.
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+
+## Today we have (in Python3)...
+
+- type annotations
+- inspect library
+
+
+###### _inspect_ can be used to implement poweful enforcement code
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Some 3rd party libraries ...
+
+### zope.interface
+- version 5 now, lots of features
+- https://pypi.org/project/zope.interface/
+
+### python-interfaces
+- simpler, modern implementation, supports py2 & py3, uses metaclasses
+- https://pypi.org/project/python-interface/
+
+### implmements
+- very simple, supports py3.6+ only, composition over inheritance
+- https://pypi.org/project/implements/
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Some 3rd party libraries ...
+
+### zope.interface
+- version 5 now, lots of features
+- https://pypi.org/project/zope.interface/
+
+### python-interfaces
+- simpler, modern implementation, supports py2 & py3, uses metaclasses
+- https://pypi.org/project/python-interface/
+
+### implmements .ps-green[<--- lets demo this]
+- very simple, supports py3.6+ only, composition over inheritance
+- https://pypi.org/project/implements/
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Demo ...
+
+
+
+
+---
+layout: false
+class: inverse, middle
+<!-- SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE SLIDE -->
+
+# Open for Q&A
+
+
+Feel free to reach out with any questions or feedback. Thanks.
+
+
+## Praveen G Shirali
+- praveengshirali@gmail.com
+- `pshirali` on BangPypers Slack
+- https://linkedin.com/in/praveenshirali
+- https://github.com/pshirali
+- I'm .underline[not] on Twitter
+
+## Link to this talk
+- https://pshirali.github.io/pyifc-demo
+
+
+
+    </textarea>
+    <script src="remark-latest.min.js"></script>
+    <script>
+      var hljs = remark.highlighter.engine;
+    </script>
+    <script src="remark.language.js"></script>
+    <script>
+      var slideshow = remark.create({
+          highlightStyle: 'monokai',
+          highlightLanguage: 'remark',
+          highlightLines: true
+        }) ;
+    </script>
+  </body>
+</html>
